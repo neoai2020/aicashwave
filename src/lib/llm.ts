@@ -1,9 +1,21 @@
+import { isOpenRouterConfigured, openRouterChat, setLastAiProvider } from './openrouter';
+
 const REGENERATION_HOST = "chatgpt-42.p.rapidapi.com";
 
 async function callChatGPTWithHost(
     messages: { role: string; content: string }[],
     host: string,
 ) {
+    if (isOpenRouterConfigured()) {
+        try {
+            const text = await openRouterChat(messages);
+            setLastAiProvider('openrouter');
+            return text;
+        } catch (e: any) {
+            console.warn("[ai] OpenRouter failed, using RapidAPI:", e?.message || e);
+        }
+    }
+
     const apiKey = process.env.RAPIDAPI_KEY;
 
     if (!apiKey) {
@@ -44,6 +56,7 @@ async function callChatGPTWithHost(
         throw new Error("ChatGPT API Error: Unexpected response structure");
     }
 
+    setLastAiProvider('rapidapi');
     return typeof result === 'string' ? result : JSON.stringify(result);
 }
 
