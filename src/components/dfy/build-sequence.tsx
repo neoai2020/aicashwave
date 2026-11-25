@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { clsx } from "clsx";
 import { BUILD_STAGES } from "@/lib/dfy/types";
 import type { BuildProgress } from "@/lib/dfy/types";
+import { useSmoothProgress } from "@/hooks/useSmoothProgress";
 
 type BuildSequenceProps = {
     progress: BuildProgress;
@@ -15,9 +16,15 @@ export function BuildSequence({ progress, active }: BuildSequenceProps) {
     const completed = new Set(progress.completedStages || []);
     const totalStages = BUILD_STAGES.length;
     const completedCount = BUILD_STAGES.filter((s) => completed.has(s.key)).length;
-    const progressPct = active && progress.currentStage
-        ? Math.round(((completedCount + 0.5) / totalStages) * 100)
-        : Math.round((completedCount / totalStages) * 100);
+    const completedPct = (completedCount / totalStages) * 100;
+    const smoothPct = useSmoothProgress({
+        floor: Math.max(completedPct, 4),
+        ceiling: (Math.min(completedCount + 1, totalStages) / totalStages) * 100,
+        running: active,
+        expectedMs: 20_000,
+    });
+    const progressPct = active ? smoothPct : completedPct;
+    const progressLabel = progressPct >= 100 ? "100" : active ? progressPct.toFixed(1) : String(Math.round(progressPct));
 
     return (
         <div className="surface-panel-elevated p-5 sm:p-6">
@@ -31,7 +38,7 @@ export function BuildSequence({ progress, active }: BuildSequenceProps) {
             <div className="mb-5">
                 <div className="mb-1 flex justify-between text-xs text-text-muted">
                     <span>Progress</span>
-                    <span className="tabular-nums">{progressPct}%</span>
+                    <span className="tabular-nums">{progressLabel}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-2)]">
                     <div
@@ -39,7 +46,7 @@ export function BuildSequence({ progress, active }: BuildSequenceProps) {
                             "h-full rounded-full transition-all duration-500",
                             active && "progress-bar-loading",
                         )}
-                        style={{ width: `${Math.max(progressPct, active ? 8 : 0)}%`, background: "var(--grad-brand)" }}
+                        style={{ width: `${progressPct}%`, background: "var(--grad-brand)" }}
                     />
                 </div>
             </div>

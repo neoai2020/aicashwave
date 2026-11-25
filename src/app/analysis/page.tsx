@@ -14,6 +14,7 @@ import { InfoHint } from "@/components/ui/InfoHint";
 import { PageHeader } from "@/components/ui/page-header";
 import { GenerationProgress } from "@/components/ui/generation-progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSmoothProgress } from "@/hooks/useSmoothProgress";
 
 function LevelBadge({ level }: { level: string }) {
     const l = level?.toLowerCase() || "";
@@ -129,6 +130,14 @@ export default function AnalysisPage() {
     const analyzedCount = variations.filter(v => analysisByVariation[v]).length;
     const allAnalyzed = variations.length > 0 && analyzedCount === variations.length;
     const isGenerating = loadingChips.size > 0;
+    const variationTotal = Math.max(variations.length, 1);
+    const analyzedPercent = (analyzedCount / variationTotal) * 100;
+    const barPercent = useSmoothProgress({
+        floor: analyzedPercent,
+        ceiling: analyzedPercent + (Math.min(loadingChips.size, variationTotal - analyzedCount) / variationTotal) * 100 * 0.85,
+        running: isGenerating && !allAnalyzed,
+        expectedMs: 15_000,
+    });
 
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
@@ -253,7 +262,7 @@ export default function AnalysisPage() {
             <div className="flex items-center gap-3">
                 <div className="flex-1 h-1.5 overflow-hidden rounded-full border border-[var(--border-subtle)] bg-[var(--surface-2)]">
                     <motion.div
-                        animate={{ width: `${(analyzedCount / Math.max(variations.length, 1)) * 100}%` }}
+                        animate={{ width: `${barPercent}%` }}
                         className="h-full rounded-full"
                         style={{ background: "var(--grad-brand)" }}
                         transition={{ duration: 0.5 }}

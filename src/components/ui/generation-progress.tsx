@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { EarningsBanner } from "./earnings-banner";
 import { WelcomeOfferBanner } from "./welcome-offer-banner";
+import { useSmoothProgress } from "@/hooks/useSmoothProgress";
 
 export const GENERATION_RESULTS_ID = "generation-results";
 
@@ -43,35 +44,9 @@ export function GenerationProgress({
   statusMessages,
   statusIntervalMs = 3200,
 }: GenerationProgressProps) {
-  const [progress, setProgress] = useState(0);
+  const progress = useSmoothProgress({ floor: 6, ceiling: 85, running: active, expectedMs: 25_000 });
   const [statusIndex, setStatusIndex] = useState(0);
   const wasActive = useRef(false);
-
-  useEffect(() => {
-    if (!active) {
-      setProgress(0);
-      setStatusIndex(0);
-      return;
-    }
-
-    setProgress(6);
-    const interval = window.setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 94) return prev;
-        // Slow asymptotic crawl so long waits still feel alive
-        const remaining = 94 - prev;
-        const step =
-          prev < 35
-            ? 2.2 + Math.random() * 1.8
-            : prev < 65
-              ? 1.1 + Math.random() * 1.2
-              : Math.max(0.25, remaining * 0.035 + Math.random() * 0.35);
-        return Math.min(94, prev + step);
-      });
-    }, 450);
-
-    return () => window.clearInterval(interval);
-  }, [active]);
 
   const statusKey = statusMessages?.join("\0") ?? "";
   const statusCount = statusMessages?.length ?? 0;
@@ -102,7 +77,7 @@ export function GenerationProgress({
   const Banner = offer === "welcome" ? WelcomeOfferBanner : EarningsBanner;
   const currentStatus =
     active && statusMessages?.length ? statusMessages[statusIndex] : null;
-  const displayPercent = Math.round(progress);
+  const displayPercent = progress.toFixed(1);
 
   return (
     <div className="flex w-full flex-col gap-3">
