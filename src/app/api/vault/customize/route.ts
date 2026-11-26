@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { clampString, requireApiUser } from "@/lib/api-auth";
 import { APP_NICHES, type NicheId } from "@/lib/niches";
-import { sanitizeExternalUrl } from "@/lib/safe-url";
+import { normalizeWebUrl } from "@/lib/safe-url";
 import { getVaultEntryById, isVaultEntryId } from "@/lib/vault/catalog";
 import { customizeVaultEntry } from "@/lib/vault/vault-customize";
 import { mapPackRow, type VaultEntryPackRow } from "@/lib/vault/vault-packs";
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const entryId = clampString(body.entryId, 64);
     const nicheIdRaw = clampString(body.nicheId, 64);
-    const affiliateLink = sanitizeExternalUrl(clampString(body.affiliateLink, 2048));
+    const affiliateLink = normalizeWebUrl(clampString(body.affiliateLink, 2048));
 
     if (!entryId || !isVaultEntryId(entryId)) {
       return NextResponse.json({ error: "Valid entry required" }, { status: 400 });

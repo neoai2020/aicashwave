@@ -11,7 +11,7 @@ import {
   PremiumStateBlock,
 } from "@/components/premium";
 import { APP_NICHES, type NicheId } from "@/lib/niches";
-import { isSafeHttpUrl } from "@/lib/safe-url";
+import { normalizeWebUrl } from "@/lib/safe-url";
 import { applyAffiliateLinkToScript, getShortsForNiche } from "@/lib/vault/shorts-catalog";
 import type { ShortsScriptPack } from "@/lib/vault/shorts-packs";
 import type { VaultStateResponse } from "@/lib/vault/types";
@@ -119,14 +119,15 @@ export default function ShortsVaultPage() {
     void Promise.all([loadState(), loadPacks()]);
   }, [hydrated, loadState, loadPacks]);
 
-  const linkValid = isSafeHttpUrl(affiliateLink.trim());
+  const normalizedLink = normalizeWebUrl(affiliateLink);
+  const linkValid = normalizedLink !== "";
 
   const nicheScripts = useMemo(
     () =>
       getShortsForNiche(niche).map((script) =>
-        applyAffiliateLinkToScript(script, affiliateLink.trim()),
+        applyAffiliateLinkToScript(script, linkValid ? normalizedLink : affiliateLink.trim()),
       ),
-    [niche, affiliateLink],
+    [niche, affiliateLink, linkValid, normalizedLink],
   );
 
   const nicheTotal = nicheScripts.length;
@@ -180,7 +181,7 @@ export default function ShortsVaultPage() {
   const handleCustomize = useCallback(
     async (scriptId: string) => {
       if (!linkValid) {
-        setLinkHint("Paste a valid http(s) affiliate link first.");
+        setLinkHint("Enter a valid affiliate link, e.g. google.com.");
         linkInputRef.current?.focus();
         return;
       }
@@ -198,7 +199,7 @@ export default function ShortsVaultPage() {
           body: JSON.stringify({
             scriptId,
             nicheId: niche,
-            affiliateLink: affiliateLink.trim(),
+            affiliateLink: normalizedLink,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -229,7 +230,7 @@ export default function ShortsVaultPage() {
         setCustomizingId(null);
       }
     },
-    [affiliateLink, linkValid, niche],
+    [normalizedLink, linkValid, niche],
   );
 
   const handleDeletePack = useCallback(async (packId: string) => {
@@ -271,9 +272,12 @@ export default function ShortsVaultPage() {
       >
         <input
           ref={linkInputRef}
-          type="url"
+          type="text"
           inputMode="url"
           autoComplete="url"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           placeholder="https://your-affiliate-link.com/offer"
           value={affiliateLink}
           onChange={(e) => {

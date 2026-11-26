@@ -11,7 +11,7 @@ import {
   PremiumStateBlock,
 } from "@/components/premium";
 import { APP_NICHES, type NicheId } from "@/lib/niches";
-import { isSafeHttpUrl } from "@/lib/safe-url";
+import { normalizeWebUrl } from "@/lib/safe-url";
 import { applyAffiliateLink, getVaultEntriesForNiche } from "@/lib/vault/catalog";
 import type { VaultEntryPack } from "@/lib/vault/vault-packs";
 import type { VaultStateResponse } from "@/lib/vault/types";
@@ -119,11 +119,11 @@ export default function VaultPage() {
     void Promise.all([loadState(), loadPacks()]);
   }, [hydrated, loadState, loadPacks]);
 
-  const trimmedAffiliateLink = affiliateLink.trim();
-  const linkValid = isSafeHttpUrl(trimmedAffiliateLink);
+  const trimmedAffiliateLink = normalizeWebUrl(affiliateLink);
+  const linkValid = trimmedAffiliateLink !== "";
   const visibleLinkHint =
-    trimmedAffiliateLink && !linkValid
-      ? "Paste a valid http(s) affiliate link first."
+    affiliateLink.trim() && !linkValid
+      ? "Enter a valid affiliate link, e.g. google.com."
       : linkHint;
 
   const nicheEntries = useMemo(
@@ -185,7 +185,7 @@ export default function VaultPage() {
   const handleCustomize = useCallback(
     async (entryId: string) => {
       if (!linkValid) {
-        setLinkHint("Paste a valid http(s) affiliate link first.");
+        setLinkHint("Enter a valid affiliate link, e.g. google.com.");
         linkInputRef.current?.focus();
         return;
       }
@@ -280,9 +280,12 @@ export default function VaultPage() {
       >
         <input
           ref={linkInputRef}
-          type="url"
+          type="text"
           inputMode="url"
           autoComplete="url"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           placeholder="https://your-affiliate-link.com/offer"
           value={affiliateLink}
           onChange={(event) => {

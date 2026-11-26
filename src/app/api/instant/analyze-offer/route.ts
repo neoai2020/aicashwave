@@ -3,6 +3,7 @@ import { requireApiUser, clampString } from "@/lib/api-auth";
 import { analyzeOffer } from "@/lib/dfy/offer-analyze";
 import type { AudienceMode } from "@/lib/dfy/types";
 import { buildManualOfferSnapshot } from "@/lib/instant/fallbacks";
+import { normalizeWebUrl } from "@/lib/safe-url";
 
 export async function POST(req: Request) {
     const auth = await requireApiUser();
@@ -10,7 +11,8 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const url = clampString(body.url, 500);
+        const rawUrl = clampString(body.url, 500);
+        const url = normalizeWebUrl(rawUrl) || rawUrl;
         const manualDescription = clampString(body.manualDescription, 2000);
         // Prefer auto so audience/angle come from the affiliate page, not a pre-selected niche.
         const audienceMode = (clampString(body.audienceMode, 30) || "auto") as AudienceMode;

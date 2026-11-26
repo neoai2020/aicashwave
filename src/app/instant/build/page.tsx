@@ -10,6 +10,7 @@ import { InlineError } from "@/components/ui/InlineError";
 import { SelectableChip } from "@/components/ui/selectable-chip";
 import { KitBuildSequence } from "@/components/instant/kit-build-sequence";
 import type { AudienceMode, OfferSnapshot } from "@/lib/dfy/types";
+import { normalizeWebUrl } from "@/lib/safe-url";
 import type { KitBuildProgress } from "@/lib/instant/types";
 import { APP_NICHES, detectNicheFromText } from "@/lib/niches";
 import { dedupeOffersByUrl } from "@/lib/dfy/offer-url";
@@ -63,7 +64,7 @@ function BuildContent() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    url: offerUrl.trim(),
+                    url: normalizeWebUrl(offerUrl) || offerUrl.trim(),
                     manualDescription: manualDescription.trim(),
                     // Analyze the link first; niche chips are chosen after analysis.
                     audienceMode: "auto",
@@ -110,7 +111,7 @@ function BuildContent() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    offerUrl: offerUrl.trim(),
+                    offerUrl: normalizeWebUrl(offerUrl) || offerUrl.trim(),
                     offerSnapshot: finalSnapshot,
                     name: finalSnapshot.productName,
                 }),
@@ -201,6 +202,10 @@ function BuildContent() {
                         value={offerUrl}
                         onChange={(e) => setOfferUrl(e.target.value)}
                         placeholder="https://your-affiliate-link.com/..."
+                        inputMode="url"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck={false}
                     />
 
                     {needsManual ? (

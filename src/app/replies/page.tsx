@@ -141,6 +141,10 @@ export default function RepliesPage() {
                 placeholder="Paste your affiliate link here (optional — it gets inserted into replies)"
                 value={affiliateLink}
                 onChange={(e) => setAffiliateLink(e.target.value)}
+                inputMode="url"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
                 trailing={<LinkIcon size={14} strokeWidth={1.75} className="text-text-muted" />}
             />
 

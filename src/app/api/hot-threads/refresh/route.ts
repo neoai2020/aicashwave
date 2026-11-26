@@ -2,7 +2,7 @@ import { after, NextResponse } from "next/server";
 import { requireApiUser, clampString } from "@/lib/api-auth";
 import { APP_NICHES, type NicheId } from "@/lib/niches";
 import { enrichHotThreadPack, getHotThreadPack, loadExistingPack } from "@/lib/hot-threads/get-pack";
-import { sanitizeExternalUrl } from "@/lib/safe-url";
+import { normalizeWebUrl } from "@/lib/safe-url";
 import { isStale } from "@/lib/hot-threads/ttl";
 
 const MAX_AFFILIATE_LINK_LENGTH = 2048;
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     niche = clampString(body.niche, 64);
-    affiliateLink = sanitizeExternalUrl(clampString(body.affiliateLink, MAX_AFFILIATE_LINK_LENGTH));
+    affiliateLink = normalizeWebUrl(clampString(body.affiliateLink, MAX_AFFILIATE_LINK_LENGTH));
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }

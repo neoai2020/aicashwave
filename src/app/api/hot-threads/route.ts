@@ -2,7 +2,7 @@ import { after, NextResponse } from "next/server";
 import { requireApiUser, clampString } from "@/lib/api-auth";
 import { APP_NICHES, type NicheId } from "@/lib/niches";
 import { enrichHotThreadPack, getHotThreadPack } from "@/lib/hot-threads/get-pack";
-import { sanitizeExternalUrl } from "@/lib/safe-url";
+import { normalizeWebUrl } from "@/lib/safe-url";
 
 const MAX_AFFILIATE_LINK_LENGTH = 2048;
 
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const niche = clampString(searchParams.get("niche"), 64);
-  const affiliateLink = sanitizeExternalUrl(
+  const affiliateLink = normalizeWebUrl(
     clampString(searchParams.get("affiliateLink"), MAX_AFFILIATE_LINK_LENGTH),
   );
 

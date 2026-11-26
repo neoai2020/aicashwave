@@ -10,6 +10,7 @@ import { InlineError } from "@/components/ui/InlineError";
 import { BuildSequence } from "@/components/dfy/build-sequence";
 import { AUDIENCE_OPTIONS, type AudienceMode, type ChannelMode, type OfferSnapshot } from "@/lib/dfy/types";
 import { clsx } from "clsx";
+import { normalizeWebUrl } from "@/lib/safe-url";
 
 function NewCampaignContent() {
     const router = useRouter();
@@ -49,13 +50,18 @@ function NewCampaignContent() {
             setError("Paste your product or affiliate link first.");
             return;
         }
+        const link = normalizeWebUrl(offerUrl);
+        if (!link) {
+            setError("Enter a valid link, e.g. google.com.");
+            return;
+        }
         setError("");
         setAnalyzing(true);
         try {
             const res = await fetch("/api/dfy/analyze-offer", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url: offerUrl.trim(), audienceMode }),
+                body: JSON.stringify({ url: link, audienceMode }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Analysis failed");
@@ -73,6 +79,11 @@ function NewCampaignContent() {
 
     const handleBuild = async () => {
         if (!offerUrl.trim()) return;
+        const link = normalizeWebUrl(offerUrl);
+        if (!link) {
+            setError("Enter a valid link, e.g. google.com.");
+            return;
+        }
         setError("");
         setBuilding(true);
         setStep(3);
@@ -83,7 +94,7 @@ function NewCampaignContent() {
                 const analyzeRes = await fetch("/api/dfy/analyze-offer", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ url: offerUrl.trim(), audienceMode }),
+                    body: JSON.stringify({ url: link, audienceMode }),
                 });
                 const analyzeData = await analyzeRes.json();
                 if (!analyzeRes.ok) throw new Error(analyzeData.error);
@@ -94,7 +105,7 @@ function NewCampaignContent() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    offerUrl: offerUrl.trim(),
+                    offerUrl: link,
                     name: currentSnapshot?.productName,
                     audienceMode,
                     channels,
@@ -109,7 +120,7 @@ function NewCampaignContent() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        url: offerUrl.trim(),
+                        url: link,
                         name: currentSnapshot.productName,
                         snapshot: currentSnapshot,
                     }),
@@ -174,6 +185,10 @@ function NewCampaignContent() {
                             value={offerUrl}
                             onChange={(e) => setOfferUrl(e.target.value)}
                             placeholder="https://..."
+                            inputMode="url"
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            spellCheck={false}
                         />
                     </div>
 

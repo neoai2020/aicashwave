@@ -9,6 +9,7 @@ import {
 import { scoreAllOpportunities, summarizeOpportunities } from "@/lib/traffic-machine/scoring";
 import { TRAFFIC_SOURCES } from "@/lib/traffic-machine/sources";
 import type { TrafficGoal } from "@/lib/traffic-machine/types";
+import { normalizeWebUrl } from "@/lib/safe-url";
 
 export async function GET() {
   const auth = await requireApiUser();
@@ -49,19 +50,16 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const offerUrl = clampString(body.offerUrl, 500);
+    const rawOfferUrl = clampString(body.offerUrl, 500);
+    const offerUrl = normalizeWebUrl(rawOfferUrl);
     const audienceNiche = clampString(body.audienceNiche, 40) || "not_sure";
     const goal = (clampString(body.goal, 20) || "visitors") as TrafficGoal;
     const legacyIds = Array.isArray(body.legacyCompletedIds)
       ? body.legacyCompletedIds.filter((id: unknown): id is string => typeof id === "string").slice(0, 100)
       : [];
 
-    if (offerUrl) {
-      try {
-        new URL(offerUrl);
-      } catch {
-        return NextResponse.json({ error: "Please enter a valid URL." }, { status: 400 });
-      }
+    if (rawOfferUrl && !offerUrl) {
+      return NextResponse.json({ error: "Enter a valid link, e.g. google.com." }, { status: 400 });
     }
 
     const machine = await upsertMachine(auth.supabase, auth.user.id, {

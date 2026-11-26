@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/field";
 import { SelectableChip } from "@/components/ui/selectable-chip";
 import { APP_NICHES } from "@/lib/niches";
 import type { TrafficGoal } from "@/lib/traffic-machine/types";
+import { normalizeWebUrl } from "@/lib/safe-url";
 
 const GOAL_OPTIONS: { id: TrafficGoal; label: string; hint: string }[] = [
   { id: "visitors", label: "More visitors", hint: "Steady traffic to your page" },
@@ -14,19 +15,6 @@ const GOAL_OPTIONS: { id: TrafficGoal; label: string; hint: string }[] = [
   { id: "sales", label: "More sales", hint: "Buyers ready to convert" },
   { id: "passive", label: "Passive traffic", hint: "Listings that keep working" },
 ];
-
-function normalizeUrl(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  try {
-    const url = new URL(withProtocol);
-    if (!url.hostname.includes(".")) return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
 
 interface SetupWizardProps {
   initialUrl?: string;
@@ -47,9 +35,9 @@ export function SetupWizard({ initialUrl = "", recommendedAudience, onComplete, 
   const [urlError, setUrlError] = useState<string | null>(null);
 
   const handleUrlNext = () => {
-    const normalized = normalizeUrl(offerUrl);
+    const normalized = normalizeWebUrl(offerUrl);
     if (!normalized) {
-      setUrlError("Enter a valid page or affiliate URL.");
+      setUrlError("Enter a valid link, e.g. google.com.");
       return;
     }
     setOfferUrl(normalized);
@@ -87,7 +75,11 @@ export function SetupWizard({ initialUrl = "", recommendedAudience, onComplete, 
             <p className="mt-1 text-sm text-text-muted">Paste your page or affiliate link once — we use it in every submission.</p>
           </div>
           <Field
-            type="url"
+            type="text"
+            inputMode="url"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
             label="Your offer link"
             placeholder="https://your-affiliate-link.com/..."
             value={offerUrl}

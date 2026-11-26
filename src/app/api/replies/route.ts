@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireApiUser, clampString } from "@/lib/api-auth";
 import { generateReplies } from "@/lib/llm";
-import { sanitizeExternalUrl } from "@/lib/safe-url";
+import { normalizeWebUrl } from "@/lib/safe-url";
 
 const MAX_ADS = 25;
 const MAX_AFFILIATE_LINK_LENGTH = 2048;
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         const rawAds = body.ads || body.posts || [];
         ads = Array.isArray(rawAds) ? rawAds.slice(0, MAX_ADS) : [];
-        affiliateLink = sanitizeExternalUrl(clampString(body.affiliateLink, MAX_AFFILIATE_LINK_LENGTH));
+        affiliateLink = normalizeWebUrl(clampString(body.affiliateLink, MAX_AFFILIATE_LINK_LENGTH));
 
         if (ads.length === 0) {
             return NextResponse.json({ error: "Ads required" }, { status: 400 });

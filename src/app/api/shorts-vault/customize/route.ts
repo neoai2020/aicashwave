@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { clampString, requireApiUser } from "@/lib/api-auth";
 import { APP_NICHES, type NicheId } from "@/lib/niches";
-import { sanitizeExternalUrl } from "@/lib/safe-url";
+import { normalizeWebUrl } from "@/lib/safe-url";
 import { getShortsScriptById, isShortsScriptId } from "@/lib/vault/shorts-catalog";
 import { customizeShortsScript } from "@/lib/vault/shorts-customize";
 import { mapPackRow, type ShortsScriptPackRow } from "@/lib/vault/shorts-packs";
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const scriptId = clampString(body.scriptId, 64);
     const nicheIdRaw = clampString(body.nicheId, 64);
-    const affiliateLink = sanitizeExternalUrl(clampString(body.affiliateLink, 2048));
+    const affiliateLink = normalizeWebUrl(clampString(body.affiliateLink, 2048));
 
     if (!scriptId || !isShortsScriptId(scriptId)) {
       return NextResponse.json({ error: "Valid script required" }, { status: 400 });
